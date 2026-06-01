@@ -137,14 +137,15 @@ function scoreSchool(school, form, topCountryNames = []) {
   const uniqueMatched = Array.from(new Set(matched));
   const directMajorHit = normalizeText(form.applicant?.targetMajor || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
   const directDirectionHit = normalizeText(form.applicant?.researchDirection || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
-  const matchScore = uniqueMatched.length * 8 + countryBoost + (directMajorHit ? 8 : 0) + (directDirectionHit ? 8 : 0);
+  const baseScore = 8;
+  const matchScore = baseScore + uniqueMatched.length * 8 + countryBoost + (directMajorHit ? 8 : 0) + (directDirectionHit ? 8 : 0);
 
   const reasons = [];
   if (uniqueMatched.length) reasons.push(`匹配方向：${uniqueMatched.slice(0, 5).join('、')}`);
   if (directMajorHit) reasons.push('目标专业直接匹配');
   if (directDirectionHit) reasons.push('研究方向直接匹配');
   if (countryBoost) reasons.push('所在国家进入家庭推荐TOP3');
-  if (!reasons.length) reasons.push('方向相关性较弱，仅作为同国家/综合备选。');
+  if (!reasons.length) reasons.push('方向相关性较弱，作为扩展备选学校。');
 
   return { ...school, matchScore, matchReasons: reasons };
 }
@@ -231,15 +232,12 @@ export function generatePlan(form) {
   }));
 
   const topNames = topCountries.map(country => country.name);
-  const schoolQuery = buildMatchQuery(form);
   const scoredMentors = db.prepare('SELECT * FROM mentors').all()
     .map(mentor => scoreMentor(mentor, form, topNames))
-    .filter(mentor => mentor.matchScore >= 16 || !buildMatchQuery(form).raw.trim())
     .sort((a, b) => b.matchScore - a.matchScore || mentorPriorityScore(b.priority) - mentorPriorityScore(a.priority) || a.country.localeCompare(b.country));
 
   const schools = db.prepare('SELECT * FROM schools').all()
     .map(school => scoreSchool(school, form, topNames))
-    .filter(school => school.matchScore >= 8 || !schoolQuery.raw.trim())
     .sort((a, b) => b.matchScore - a.matchScore || a.country.localeCompare(b.country) || a.name.localeCompare(b.name))
     .slice(0, 25)
     .map(school => {
