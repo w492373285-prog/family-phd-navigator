@@ -189,6 +189,24 @@ function scoreMentor(mentor, form, topCountryNames = []) {
   };
 }
 
+function createSchoolMentorLead(school) {
+  return {
+    id: `school-lead-${school.id}`,
+    country: school.country,
+    school: school.name,
+    name: `${school.name} 官方导师 / 课题组检索`,
+    research_area: school.discipline,
+    email: '',
+    profile_url: school.phd_url,
+    priority: '检索',
+    keywords: school.discipline,
+    fit_notes: '该校暂无内置具体导师数据，建议先从博士项目页、学院Faculty/Staff页面或PhD vacancy页面按研究方向继续筛选导师。',
+    contact_strategy: '打开博士项目页面后，用你的目标专业和研究方向关键词检索导师；优先找主页明确写有PhD supervision、doctoral students、research projects或open positions的老师。',
+    matchScore: Math.max(12, Number(school.matchScore || 0) - 4),
+    matchReasons: ['该校方向匹配，需进入官方页面继续筛导师。']
+  };
+}
+
 export function generatePlan(form) {
   const countries = db.prepare('SELECT * FROM countries').all();
   const ranked = countries.map(row => {
@@ -214,16 +232,29 @@ export function generatePlan(form) {
 
   const topNames = topCountries.map(country => country.name);
   const schoolQuery = buildMatchQuery(form);
+  const scoredMentors = db.prepare('SELECT * FROM mentors').all()
+    .map(mentor => scoreMentor(mentor, form, topNames))
+    .filter(mentor => mentor.matchScore >= 16 || !buildMatchQuery(form).raw.trim())
+    .sort((a, b) => b.matchScore - a.matchScore || mentorPriorityScore(b.priority) - mentorPriorityScore(a.priority) || a.country.localeCompare(b.country));
+
   const schools = db.prepare('SELECT * FROM schools').all()
     .map(school => scoreSchool(school, form, topNames))
-    .filter(school => school.matchScore >= 16 || !schoolQuery.raw.trim())
+    .filter(school => school.matchScore >= 8 || !schoolQuery.raw.trim())
     .sort((a, b) => b.matchScore - a.matchScore || a.country.localeCompare(b.country) || a.name.localeCompare(b.name))
-    .slice(0, 18);
-  const mentorQuery = buildMatchQuery(form);
-  const mentors = db.prepare('SELECT * FROM mentors').all()
-    .map(mentor => scoreMentor(mentor, form, topNames))
-    .filter(mentor => mentor.matchScore >= 16 || !mentorQuery.raw.trim())
-    .sort((a, b) => b.matchScore - a.matchScore || mentorPriorityScore(b.priority) - mentorPriorityScore(a.priority) || a.country.localeCompare(b.country));
+    .slice(0, 25)
+    .map(school => {
+      const mentorCandidates = scoredMentors
+        .filter(mentor => mentor.school === school.name)
+        .slice(0, 5);
+
+      return {
+        ...school,
+        mentorCandidates: mentorCandidates.length ? mentorCandidates : [createSchoolMentorLead(school)]
+      };
+    });
+  const mentors = schools.flatMap(school => school.mentorCandidates)
+    .sort((a, b) => Number(b.matchScore || 0) - Number(a.matchScore || 0))
+    .slice(0, 40);
   const budgets = db.prepare(`SELECT * FROM budgets WHERE country IN (${topNames.map(() => '?').join(',')})`).all(...topNames);
   const stages = db.prepare('SELECT * FROM stages ORDER BY stage_order').all();
   const materials = db.prepare('SELECT * FROM materials ORDER BY id').all();

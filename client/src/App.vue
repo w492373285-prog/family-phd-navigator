@@ -110,7 +110,7 @@
     </section>
 
     <section v-if="activeTab === 'schools'" class="screen">
-      <PageHeader title="推荐学校 / 导师" subtitle="按国家TOP3筛出可优先研究的学校和导师候选，套磁前务必打开官方主页核验是否仍接收博士。" />
+      <PageHeader title="推荐学校 / 导师" subtitle="先按你的目标专业和研究方向给学校排序，再在每所推荐学校下面列出该校导师候选。" />
       <EmptyState v-if="!plan" @go="activeTab = 'form'" />
       <template v-else>
         <section class="panel">
@@ -133,36 +133,35 @@
           <div class="match-line">
             <small>{{ (school.matchReasons || []).join('；') }}</small>
           </div>
-          <a :href="school.phd_url" target="_blank">博士项目页面</a>
-          <a :href="school.scholarship_url" target="_blank">奖学金页面</a>
-        </article>
-        <div class="section-title">
-          <h2>推荐导师候选</h2>
-          <span>{{ plan.mentors.length }} 位/条线索</span>
-        </div>
-        <section v-if="plan.mentors.length === 0" class="panel">
-          <h2>暂无高相关导师</h2>
-          <p>当前TOP3国家里没有和你填写方向明显匹配的导师候选。建议先扩大国家范围，或在后台补充该专业的学校与导师数据。</p>
-        </section>
-        <article v-for="mentor in plan.mentors" :key="mentor.id" class="mentor-card">
-          <div class="mentor-head">
-            <UserRound :size="20" />
-            <div>
-              <strong>{{ mentor.name }}</strong>
-              <p>{{ mentor.country }} · {{ mentor.school }}</p>
+          <div class="school-links">
+            <a :href="school.phd_url" target="_blank">博士项目页面</a>
+            <a :href="school.scholarship_url" target="_blank">奖学金页面</a>
+          </div>
+
+          <div class="school-mentor-block">
+            <div class="school-mentor-title">
+              <h3>该校导师候选排序</h3>
+              <span>{{ school.mentorCandidates?.length || 0 }} 位/条线索</span>
             </div>
-            <span :class="['priority-pill', mentor.priority === '高' ? 'high' : mentor.priority === '暂缓' ? 'pause' : '']">{{ mentor.matchScore || 0 }}分</span>
+            <article v-for="(mentor, mentorIndex) in school.mentorCandidates || []" :key="mentor.id" class="mentor-mini-card">
+              <div class="mentor-mini-head">
+                <span class="mentor-rank">{{ mentorIndex + 1 }}</span>
+                <div>
+                  <strong>{{ mentor.name }}</strong>
+                  <p>{{ mentor.research_area }}</p>
+                </div>
+                <b>{{ mentor.matchScore || 0 }}分</b>
+              </div>
+              <div class="match-line">
+                <span :class="['priority-pill', mentor.priority === '高' ? 'high' : mentor.priority === '暂缓' ? 'pause' : '']">{{ mentor.priority || '候选' }}</span>
+                <small>{{ (mentor.matchReasons || []).join('；') }}</small>
+              </div>
+              <p><b>推荐理由：</b>{{ mentor.fit_notes }}</p>
+              <p><b>套磁建议：</b>{{ mentor.contact_strategy || '先读论文和导师主页，再发送CV与1页研究计划摘要。' }}</p>
+              <a v-if="mentor.profile_url" :href="mentor.profile_url" target="_blank">官方主页 / 检索页</a>
+              <a v-if="mentor.email" :href="`mailto:${mentor.email}`">发送邮件</a>
+            </article>
           </div>
-          <div class="match-line">
-            <span :class="['priority-pill', mentor.priority === '高' ? 'high' : mentor.priority === '暂缓' ? 'pause' : '']">{{ mentor.priority || '候选' }}</span>
-            <small>{{ (mentor.matchReasons || []).join('；') }}</small>
-          </div>
-          <p><b>研究方向：</b>{{ mentor.research_area }}</p>
-          <p><b>匹配关键词：</b>{{ mentor.keywords || '按申请人研究方向继续核验' }}</p>
-          <p><b>推荐理由：</b>{{ mentor.fit_notes }}</p>
-          <p><b>套磁建议：</b>{{ mentor.contact_strategy || '先读论文和导师主页，再发送CV与1页研究计划摘要。' }}</p>
-          <a v-if="mentor.profile_url" :href="mentor.profile_url" target="_blank">官方主页 / 检索页</a>
-          <a v-if="mentor.email" :href="`mailto:${mentor.email}`">发送邮件</a>
         </article>
       </template>
     </section>
