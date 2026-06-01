@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: family-phd-navigator
+    runtime: node
+    plan: starter
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /var/data/navigator.sqlite
+    disk:
+      name: family-phd-navigator-data
+      mountPath: /var/data
+      sizeGB: 1

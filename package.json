@@ -1,0 +1,19 @@
+{
+  "name": "family-phd-navigator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "一家三口出国读博全流程规划筛选器",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix client && npm install --prefix server",
+    "render-build": "npm install --prefix client && npm install --prefix server && npm run build --prefix client",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start": "npm run start --prefix server",
+    "build": "npm run build --prefix client"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
