@@ -10,6 +10,79 @@ const SCORE_FIELDS = [
   ['安全与适应度', 'score_safety', 5]
 ];
 
+const SCHOOL_DISCOVERY_SOURCES = {
+  'Victoria University of Wellington': [
+    ['Master of Public Policy people', 'https://www.wgtn.ac.nz/explore/postgraduate-programmes/master-of-public-policy/people?programme=master-of-public-policy'],
+    ['Wellington Faculty profiles search', 'https://people.wgtn.ac.nz/'],
+    ['School of Government', 'https://www.wgtn.ac.nz/sog']
+  ],
+  'Monash University': [
+    ['Monash research profiles', 'https://research.monash.edu/'],
+    ['Faculty of Education staff', 'https://www.monash.edu/education/about/our-people'],
+    ['Faculty of Arts staff', 'https://www.monash.edu/arts/about/our-people']
+  ],
+  'University of British Columbia': [
+    ['UBC research supervisors', 'https://www.grad.ubc.ca/prospective-students/research-supervisors'],
+    ['UBC Faculty of Education people', 'https://educ.ubc.ca/faculty-staff/'],
+    ['UBC graduate programs', 'https://www.grad.ubc.ca/prospective-students/graduate-degree-programs']
+  ],
+  'University of Toronto': [
+    ['OISE Higher Education in Canada', 'https://www.oise.utoronto.ca/hec/about'],
+    ['OISE faculty directory', 'https://www.oise.utoronto.ca/people'],
+    ['University of Toronto graduate faculty search', 'https://www.sgs.utoronto.ca/faculty-staff/graduate-faculty-membership/']
+  ],
+  'The University of Hong Kong': [
+    ['HKU Faculty of Education academics', 'https://web.edu.hku.hk/faculty-academics'],
+    ['Technology-enhanced learning expertise', 'https://web.edu.hku.hk/research-expertise/technology-enhanced-learning'],
+    ['HKU Graduate School', 'https://gradsch.hku.hk/']
+  ],
+  'University of Auckland': [
+    ['Auckland staff profiles', 'https://profiles.auckland.ac.nz/'],
+    ['Auckland doctoral study', 'https://www.auckland.ac.nz/en/study/study-options/find-a-study-option/doctor-of-philosophy-phd.html'],
+    ['Auckland Faculty of Education and Social Work', 'https://www.auckland.ac.nz/en/education.html']
+  ],
+  'Nanyang Technological University': [
+    ['NTU faculty directory', 'https://www.ntu.edu.sg/research/faculty-directory'],
+    ['NTU graduate admissions', 'https://www.ntu.edu.sg/admissions/graduate'],
+    ['National Institute of Education faculty', 'https://www.ntu.edu.sg/nie/about-us/people']
+  ],
+  'National University of Singapore': [
+    ['NUS Graduate School', 'https://nusgs.nus.edu.sg/'],
+    ['NUS faculty search', 'https://www.nus.edu.sg/search'],
+    ['NUS Lee Kuan Yew School faculty', 'https://lkyspp.nus.edu.sg/our-people/faculty']
+  ],
+  'University College London': [
+    ['UCL profiles search', 'https://profiles.ucl.ac.uk/'],
+    ['UCL IOE people', 'https://www.ucl.ac.uk/ioe/about-ioe/departments-and-centres'],
+    ['UCL graduate research degrees', 'https://www.ucl.ac.uk/prospective-students/graduate/research-degrees']
+  ],
+  'Technical University of Munich': [
+    ['TUM professor profiles', 'https://www.professoren.tum.de/en/'],
+    ['TUM jobs and vacancies', 'https://portal.mytum.de/jobs'],
+    ['TUM doctoral candidates', 'https://www.tum.de/en/studies/doctoral-candidates']
+  ],
+  'University of Amsterdam': [
+    ['UvA PhD vacancies', 'https://vacatures.uva.nl/UvA/search/?createNewAlert=false&q=phd'],
+    ['UvA research profiles', 'https://www.uva.nl/en/research/researchers/researchers.html'],
+    ['UvA PhD information', 'https://www.uva.nl/en/education/phd/phd.html']
+  ],
+  'Delft University of Technology': [
+    ['TU Delft jobs', 'https://www.tudelft.nl/en/about-tu-delft/working-at-tu-delft/search-jobs'],
+    ['TU Delft research profiles', 'https://www.tudelft.nl/en/research/researchers'],
+    ['TU Delft PhD information', 'https://www.tudelft.nl/en/education/programmes/phd']
+  ],
+  'University of Tokyo': [
+    ['UTokyo graduate programs', 'https://www.u-tokyo.ac.jp/en/prospective-students/graduate_course.html'],
+    ['UTokyo researchers', 'https://www.u-tokyo.ac.jp/focus/en/people/'],
+    ['UTokyo scholarships', 'https://www.u-tokyo.ac.jp/en/prospective-students/scholarships.html']
+  ],
+  'Kyoto University': [
+    ['Kyoto graduate schools', 'https://www.kyoto-u.ac.jp/en/education-campus/education-and-admissions/graduate-degree-programs'],
+    ['Kyoto activity database', 'https://kdb.iimc.kyoto-u.ac.jp/'],
+    ['Kyoto scholarships', 'https://www.kyoto-u.ac.jp/en/education-campus/tuition/scholarships']
+  ]
+};
+
 function rowTotal(row) {
   return SCORE_FIELDS.reduce((sum, [, key]) => sum + Number(row[key] || 0), 0);
 }
@@ -191,21 +264,26 @@ function scoreMentor(mentor, form, topCountryNames = []) {
 }
 
 function createSchoolMentorLead(school) {
-  return {
-    id: `school-lead-${school.id}`,
+  const sources = SCHOOL_DISCOVERY_SOURCES[school.name] || [
+    ['博士项目页面', school.phd_url],
+    ['奖学金/研究生页面', school.scholarship_url]
+  ];
+
+  return sources.filter(([, url]) => Boolean(url)).slice(0, 3).map(([sourceName, url], index) => ({
+    id: `school-lead-${school.id}-${index}`,
     country: school.country,
     school: school.name,
-    name: `${school.name} 官方导师 / 课题组检索`,
+    name: `${sourceName} - 自动整理入口`,
     research_area: school.discipline,
     email: '',
-    profile_url: school.phd_url,
-    priority: '检索',
+    profile_url: url,
+    priority: index === 0 ? '高' : '检索',
     keywords: school.discipline,
-    fit_notes: '该校暂无内置具体导师数据，建议先从博士项目页、学院Faculty/Staff页面或PhD vacancy页面按研究方向继续筛选导师。',
-    contact_strategy: '打开博士项目页面后，用你的目标专业和研究方向关键词检索导师；优先找主页明确写有PhD supervision、doctoral students、research projects或open positions的老师。',
-    matchScore: Math.max(12, Number(school.matchScore || 0) - 4),
-    matchReasons: ['该校方向匹配，需进入官方页面继续筛导师。']
-  };
+    fit_notes: `系统已为${school.name}整理该官方入口，用来继续定位具体导师、学院人员、博士职位或研究组。`,
+    contact_strategy: `打开该入口后，用“${school.discipline.split('/').slice(0, 3).map(item => item.trim()).join(' / ')}”以及你的研究方向关键词检索；优先记录姓名、邮箱、近3年论文、是否写明PhD supervision或open positions。`,
+    matchScore: Math.max(12, Number(school.matchScore || 0) - index * 2),
+    matchReasons: ['自动整理的官方导师/课题组来源', ...(school.matchReasons || []).slice(0, 2)]
+  }));
 }
 
 export function generatePlan(form) {
@@ -247,7 +325,7 @@ export function generatePlan(form) {
 
       return {
         ...school,
-        mentorCandidates: mentorCandidates.length ? mentorCandidates : [createSchoolMentorLead(school)]
+        mentorCandidates: mentorCandidates.length ? mentorCandidates : createSchoolMentorLead(school)
       };
     });
   const mentors = schools.flatMap(school => school.mentorCandidates)

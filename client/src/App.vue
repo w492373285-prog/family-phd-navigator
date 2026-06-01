@@ -140,7 +140,7 @@
 
           <div class="school-mentor-block">
             <div class="school-mentor-title">
-              <h3>该校导师候选排序</h3>
+              <h3>该校导师 / 官方来源排序</h3>
               <span>{{ school.mentorCandidates?.length || 0 }} 位/条线索</span>
             </div>
             <article v-for="(mentor, mentorIndex) in school.mentorCandidates || []" :key="mentor.id" class="mentor-mini-card">
@@ -156,7 +156,7 @@
                 <span :class="['priority-pill', mentor.priority === '高' ? 'high' : mentor.priority === '暂缓' ? 'pause' : '']">{{ mentor.priority || '候选' }}</span>
                 <small>{{ (mentor.matchReasons || []).join('；') }}</small>
               </div>
-              <p><b>推荐理由：</b>{{ mentor.fit_notes }}</p>
+              <p><b>整理结果：</b>{{ mentor.fit_notes }}</p>
               <p><b>套磁建议：</b>{{ mentor.contact_strategy || '先读论文和导师主页，再发送CV与1页研究计划摘要。' }}</p>
               <a v-if="mentor.profile_url" :href="mentor.profile_url" target="_blank">官方主页 / 检索页</a>
               <a v-if="mentor.email" :href="`mailto:${mentor.email}`">发送邮件</a>
