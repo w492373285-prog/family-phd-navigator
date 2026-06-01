@@ -73,6 +73,122 @@ function monthlyPlan() {
   ];
 }
 
+function normalizeText(value = '') {
+  return String(value).toLowerCase().replace(/[，。；、/|]+/g, ' ');
+}
+
+function mentorPriorityScore(priority) {
+  if (priority === '高') return 8;
+  if (priority === '中') return 4;
+  if (priority === '暂缓') return -8;
+  return 2;
+}
+
+function buildMatchQuery(form) {
+  const raw = [
+    form.applicant?.targetMajor,
+    form.applicant?.researchDirection
+  ].filter(Boolean).join(' ');
+
+  const normalized = normalizeText(raw);
+  const aliases = [
+    ['教育', ['education', 'learning', 'teaching', 'teacher', 'pedagogy', 'curriculum', 'school', 'higher education', 'doctoral education']],
+    ['教育技术', ['educational technology', 'technology-enhanced learning', 'digital learning', 'ai in education', 'learning sciences']],
+    ['人工智能', ['ai', 'artificial intelligence', 'machine learning', 'reliable ai', 'explainable machine learning']],
+    ['计算机', ['computer science', 'data science', 'database', 'algorithms', 'complexity', 'data engineering']],
+    ['数据', ['data science', 'database', 'data engineering', 'analytics']],
+    ['心理', ['psychology', 'educational psychology', 'child development', 'motivation']],
+    ['管理', ['management', 'governance', 'leadership', 'policy']],
+    ['政策', ['policy', 'governance', 'public policy', 'higher education policy']],
+    ['语言', ['language', 'bilingualism', 'multilingualism', 'literacy']],
+    ['数学', ['mathematics education', 'math education']],
+    ['科学', ['science education', 'stem']]
+  ];
+
+  const terms = new Set(normalized.split(/\s+/).filter(item => item.length >= 2));
+  aliases.forEach(([key, values]) => {
+    if (normalized.includes(key) || values.some(value => normalized.includes(value))) {
+      terms.add(key);
+      values.forEach(value => terms.add(value));
+    }
+  });
+
+  return { raw, terms: Array.from(terms) };
+}
+
+function scoreSchool(school, form, topCountryNames = []) {
+  const { raw, terms } = buildMatchQuery(form);
+  const haystack = normalizeText([
+    school.name,
+    school.country,
+    school.discipline
+  ].filter(Boolean).join(' '));
+  const countryBoost = topCountryNames.includes(school.country) ? 8 : 0;
+
+  if (!raw.trim()) {
+    return {
+      ...school,
+      matchScore: 20 + countryBoost,
+      matchReasons: ['尚未填写目标专业或研究方向，先按国家推荐和学校综合范围展示。']
+    };
+  }
+
+  const matched = terms.filter(term => haystack.includes(normalizeText(term)));
+  const uniqueMatched = Array.from(new Set(matched));
+  const directMajorHit = normalizeText(form.applicant?.targetMajor || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
+  const directDirectionHit = normalizeText(form.applicant?.researchDirection || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
+  const matchScore = uniqueMatched.length * 8 + countryBoost + (directMajorHit ? 8 : 0) + (directDirectionHit ? 8 : 0);
+
+  const reasons = [];
+  if (uniqueMatched.length) reasons.push(`匹配方向：${uniqueMatched.slice(0, 5).join('、')}`);
+  if (directMajorHit) reasons.push('目标专业直接匹配');
+  if (directDirectionHit) reasons.push('研究方向直接匹配');
+  if (countryBoost) reasons.push('所在国家进入家庭推荐TOP3');
+  if (!reasons.length) reasons.push('方向相关性较弱，仅作为同国家/综合备选。');
+
+  return { ...school, matchScore, matchReasons: reasons };
+}
+
+function scoreMentor(mentor, form, topCountryNames = []) {
+  const { raw, terms } = buildMatchQuery(form);
+  const haystack = normalizeText([
+    mentor.name,
+    mentor.school,
+    mentor.research_area,
+    mentor.keywords,
+    mentor.fit_notes
+  ].filter(Boolean).join(' '));
+
+  const countryBoost = topCountryNames.includes(mentor.country) ? 6 : 0;
+
+  if (!raw.trim()) {
+    return {
+      ...mentor,
+      matchScore: mentorPriorityScore(mentor.priority) + countryBoost,
+      matchReasons: ['尚未填写目标专业或研究方向，先按国家和导师优先级展示。']
+    };
+  }
+
+  const matched = terms.filter(term => haystack.includes(normalizeText(term)));
+  const uniqueMatched = Array.from(new Set(matched));
+  const directMajorHit = normalizeText(form.applicant?.targetMajor || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
+  const directDirectionHit = normalizeText(form.applicant?.researchDirection || '').split(/\s+/).some(term => term.length >= 2 && haystack.includes(term));
+  const matchScore = uniqueMatched.length * 10 + mentorPriorityScore(mentor.priority) + countryBoost + (directMajorHit ? 8 : 0) + (directDirectionHit ? 10 : 0);
+
+  const reasons = [];
+  if (uniqueMatched.length) reasons.push(`匹配关键词：${uniqueMatched.slice(0, 5).join('、')}`);
+  if (directMajorHit) reasons.push('目标专业直接匹配');
+  if (directDirectionHit) reasons.push('研究方向直接匹配');
+  if (countryBoost) reasons.push('所在国家进入家庭推荐TOP3');
+  if (!reasons.length) reasons.push('与当前目标方向相关性较弱，仅作为同国家备选线索。');
+
+  return {
+    ...mentor,
+    matchScore,
+    matchReasons: reasons
+  };
+}
+
 export function generatePlan(form) {
   const countries = db.prepare('SELECT * FROM countries').all();
   const ranked = countries.map(row => {
@@ -97,8 +213,17 @@ export function generatePlan(form) {
   }));
 
   const topNames = topCountries.map(country => country.name);
-  const schools = db.prepare(`SELECT * FROM schools WHERE country IN (${topNames.map(() => '?').join(',')})`).all(...topNames);
-  const mentors = db.prepare('SELECT * FROM mentors').all();
+  const schoolQuery = buildMatchQuery(form);
+  const schools = db.prepare('SELECT * FROM schools').all()
+    .map(school => scoreSchool(school, form, topNames))
+    .filter(school => school.matchScore >= 16 || !schoolQuery.raw.trim())
+    .sort((a, b) => b.matchScore - a.matchScore || a.country.localeCompare(b.country) || a.name.localeCompare(b.name))
+    .slice(0, 18);
+  const mentorQuery = buildMatchQuery(form);
+  const mentors = db.prepare('SELECT * FROM mentors').all()
+    .map(mentor => scoreMentor(mentor, form, topNames))
+    .filter(mentor => mentor.matchScore >= 16 || !mentorQuery.raw.trim())
+    .sort((a, b) => b.matchScore - a.matchScore || mentorPriorityScore(b.priority) - mentorPriorityScore(a.priority) || a.country.localeCompare(b.country));
   const budgets = db.prepare(`SELECT * FROM budgets WHERE country IN (${topNames.map(() => '?').join(',')})`).all(...topNames);
   const stages = db.prepare('SELECT * FROM stages ORDER BY stage_order').all();
   const materials = db.prepare('SELECT * FROM materials ORDER BY id').all();

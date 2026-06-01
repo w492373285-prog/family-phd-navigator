@@ -50,11 +50,16 @@ function createTables() {
 
     CREATE TABLE IF NOT EXISTS mentors (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      country TEXT,
       school TEXT NOT NULL,
       name TEXT NOT NULL,
       research_area TEXT,
       email TEXT,
-      fit_notes TEXT
+      profile_url TEXT,
+      priority TEXT,
+      keywords TEXT,
+      fit_notes TEXT,
+      contact_strategy TEXT
     );
 
     CREATE TABLE IF NOT EXISTS budgets (
@@ -90,9 +95,28 @@ function createTables() {
   `);
 }
 
+function ensureColumn(table, column, definition) {
+  const columns = db.prepare(`PRAGMA table_info(${table})`).all().map(item => item.name);
+  if (!columns.includes(column)) {
+    db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`).run();
+  }
+}
+
+function migrateTables() {
+  ensureColumn('mentors', 'country', 'TEXT');
+  ensureColumn('mentors', 'profile_url', 'TEXT');
+  ensureColumn('mentors', 'priority', 'TEXT');
+  ensureColumn('mentors', 'keywords', 'TEXT');
+  ensureColumn('mentors', 'contact_strategy', 'TEXT');
+}
+
 function seedIfEmpty() {
   const count = db.prepare('SELECT COUNT(*) AS count FROM countries').get().count;
-  if (count > 0) return;
+  if (count > 0) {
+    seedSchoolsIfOutdated();
+    seedMentorsIfOutdated();
+    return;
+  }
 
   const insertCountry = db.prepare(`
     INSERT INTO countries (
@@ -109,7 +133,7 @@ function seedIfEmpty() {
   `);
 
   const insertSchool = db.prepare('INSERT INTO schools (country, name, discipline, phd_url, scholarship_url) VALUES (@country, @name, @discipline, @phd_url, @scholarship_url)');
-  const insertMentor = db.prepare('INSERT INTO mentors (school, name, research_area, email, fit_notes) VALUES (@school, @name, @research_area, @email, @fit_notes)');
+  const insertMentor = db.prepare('INSERT INTO mentors (country, school, name, research_area, email, profile_url, priority, keywords, fit_notes, contact_strategy) VALUES (@country, @school, @name, @research_area, @email, @profile_url, @priority, @keywords, @fit_notes, @contact_strategy)');
   const insertBudget = db.prepare('INSERT INTO budgets (country, tuition, rent, living, insurance, child_school, visa, note) VALUES (@country, @tuition, @rent, @living, @insurance, @child_school, @visa, @note)');
   const insertMaterial = db.prepare('INSERT INTO materials (name, owner, notes, required) VALUES (@name, @owner, @notes, @required)');
   const insertStage = db.prepare('INSERT INTO stages (stage_order, title, task, materials, completion, risks, next_step) VALUES (@stage_order, @title, @task, @materials, @completion, @risks, @next_step)');
@@ -135,7 +159,35 @@ function seedIfEmpty() {
   seed();
 }
 
+function seedSchoolsIfOutdated() {
+  const rows = db.prepare('SELECT name FROM schools').all();
+  const hasExpandedList = rows.length >= 20;
+  if (hasExpandedList) return;
+
+  const resetSchools = db.transaction(() => {
+    db.prepare('DELETE FROM schools').run();
+    const insertSchool = db.prepare('INSERT INTO schools (country, name, discipline, phd_url, scholarship_url) VALUES (@country, @name, @discipline, @phd_url, @scholarship_url)');
+    schools.forEach(item => insertSchool.run(item));
+  });
+  resetSchools();
+}
+
+function seedMentorsIfOutdated() {
+  const rows = db.prepare('SELECT name FROM mentors').all();
+  const hasOldPlaceholders = rows.some(row => row.name.startsWith('待筛选导师'));
+  const hasRecommendedList = rows.length >= 18 && rows.some(row => row.name.includes('Professor') || row.name.includes('Prof'));
+  if (!hasOldPlaceholders && hasRecommendedList) return;
+
+  const resetMentors = db.transaction(() => {
+    db.prepare('DELETE FROM mentors').run();
+    const insertMentor = db.prepare('INSERT INTO mentors (country, school, name, research_area, email, profile_url, priority, keywords, fit_notes, contact_strategy) VALUES (@country, @school, @name, @research_area, @email, @profile_url, @priority, @keywords, @fit_notes, @contact_strategy)');
+    mentors.forEach(item => insertMentor.run(item));
+  });
+  resetMentors();
+}
+
 export function initDb() {
   createTables();
+  migrateTables();
   seedIfEmpty();
 }
