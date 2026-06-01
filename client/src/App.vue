@@ -9,6 +9,10 @@
           <ClipboardList :size="18" />
           开始填写家庭情况
         </button>
+        <button v-if="hasSavedData" class="ghost-btn hero-secondary" @click="continueLastPlan">
+          <BookOpen :size="18" />
+          继续上次规划
+        </button>
       </div>
 
       <div class="quick-grid">
@@ -22,6 +26,10 @@
 
     <section v-if="activeTab === 'form'" class="screen">
       <PageHeader title="信息填写" subtitle="四步完成家庭画像，系统会按100分维度生成国家推荐。" />
+      <div v-if="savedAtText" class="save-status">
+        <span>已自动保存：{{ savedAtText }}</span>
+        <button type="button" @click="clearSavedData">清空本地记录</button>
+      </div>
       <div class="stepper">
         <button v-for="(step, index) in steps" :key="step" :class="{ active: formStep === index }" @click="formStep = index">{{ index + 1 }}</button>
       </div>
@@ -216,6 +224,7 @@
       <EmptyState v-if="!plan" @go="activeTab = 'form'" />
       <template v-else>
         <div class="report-toolbar">
+          <button class="ghost-btn" @click="clearSavedData">清空本地记录</button>
           <button class="primary-btn" @click="downloadPdf"><Download :size="18" />导出PDF</button>
         </div>
         <ReportView :plan="plan" />
@@ -237,7 +246,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { BookOpen, BriefcaseBusiness, ChevronLeft, ChevronRight, ClipboardList, Download, FileText, Flag, GraduationCap, Home, LayoutDashboard, Map, School, Sparkles, UserRound, WalletCards } from 'lucide-vue-next';
 import { api } from './services/api';
 import PageHeader from './components/PageHeader.vue';
@@ -249,6 +258,15 @@ const activeTab = ref('home');
 const formStep = ref(0);
 const loading = ref(false);
 const plan = ref(null);
+const hasSavedData = ref(false);
+const savedAt = ref('');
+const restored = ref(false);
+
+const STORAGE_KEYS = {
+  form: 'familyPhdNavigator.form.v1',
+  plan: 'familyPhdNavigator.plan.v1',
+  savedAt: 'familyPhdNavigator.savedAt.v1'
+};
 
 const form = ref({
   family: { city: '', annualBudget: 450000, departureMonth: '', regionPreference: '不限' },
@@ -276,10 +294,82 @@ const homeCards = computed(() => [
   { title: '家庭落地', text: '配偶工作、孩子入学、签证与预算联动。', icon: BriefcaseBusiness }
 ]);
 
+const savedAtText = computed(() => {
+  if (!savedAt.value) return '';
+  const date = new Date(savedAt.value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+});
+
+function mergeForm(defaultForm, savedForm) {
+  return {
+    family: { ...defaultForm.family, ...(savedForm.family || {}) },
+    applicant: { ...defaultForm.applicant, ...(savedForm.applicant || {}) },
+    spouse: { ...defaultForm.spouse, ...(savedForm.spouse || {}) },
+    child: { ...defaultForm.child, ...(savedForm.child || {}) }
+  };
+}
+
+function saveLocalState() {
+  if (!restored.value) return;
+  const now = new Date().toISOString();
+  localStorage.setItem(STORAGE_KEYS.form, JSON.stringify(form.value));
+  localStorage.setItem(STORAGE_KEYS.savedAt, now);
+  savedAt.value = now;
+  hasSavedData.value = true;
+}
+
+function savePlanState(nextPlan) {
+  localStorage.setItem(STORAGE_KEYS.plan, JSON.stringify(nextPlan));
+  saveLocalState();
+}
+
+function restoreLocalState() {
+  const savedForm = localStorage.getItem(STORAGE_KEYS.form);
+  const savedPlan = localStorage.getItem(STORAGE_KEYS.plan);
+  const lastSavedAt = localStorage.getItem(STORAGE_KEYS.savedAt);
+
+  if (savedForm) {
+    try {
+      form.value = mergeForm(form.value, JSON.parse(savedForm));
+      hasSavedData.value = true;
+    } catch {
+      localStorage.removeItem(STORAGE_KEYS.form);
+    }
+  }
+
+  if (savedPlan) {
+    try {
+      plan.value = JSON.parse(savedPlan);
+      hasSavedData.value = true;
+    } catch {
+      localStorage.removeItem(STORAGE_KEYS.plan);
+    }
+  }
+
+  savedAt.value = lastSavedAt || '';
+  restored.value = true;
+}
+
+function continueLastPlan() {
+  activeTab.value = plan.value ? 'report' : 'form';
+}
+
+function clearSavedData() {
+  localStorage.removeItem(STORAGE_KEYS.form);
+  localStorage.removeItem(STORAGE_KEYS.plan);
+  localStorage.removeItem(STORAGE_KEYS.savedAt);
+  plan.value = null;
+  savedAt.value = '';
+  hasSavedData.value = false;
+  activeTab.value = 'form';
+}
+
 async function submitPlan() {
   loading.value = true;
   try {
     plan.value = await api.generatePlan(form.value);
+    savePlanState(plan.value);
     activeTab.value = 'report';
   } finally {
     loading.value = false;
@@ -289,4 +379,12 @@ async function submitPlan() {
 function downloadPdf() {
   api.downloadPdf(form.value);
 }
+
+watch(form, saveLocalState, { deep: true });
+watch(plan, nextPlan => {
+  if (!restored.value || !nextPlan) return;
+  localStorage.setItem(STORAGE_KEYS.plan, JSON.stringify(nextPlan));
+}, { deep: true });
+
+onMounted(restoreLocalState);
 </script>

@@ -47,6 +47,7 @@ a { color: #14614f; display: inline-flex; margin-right: 14px; margin-top: 8px; }
 .primary-btn { background: #0f6b56; color: white; }
 .primary-btn:disabled, .ghost-btn:disabled { opacity: 0.45; }
 .ghost-btn { background: #e7ece6; color: #22342b; }
+.hero-secondary { margin-left: 8px; margin-top: 8px; }
 
 .quick-grid { display: grid; gap: 10px; }
 .quick-card, .form-card, .panel, .country-card, .budget-card, .mentor-row, .mentor-card, .school-card, .empty-state, .admin-form, .admin-row {
@@ -85,6 +86,25 @@ input, select, textarea {
 textarea { resize: vertical; }
 .form-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
 .form-actions button { flex: 1; }
+.save-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #edf3ef;
+  border: 1px solid #d7e2d9;
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin-bottom: 12px;
+  color: #4c5d54;
+  font-size: 13px;
+}
+.save-status button {
+  background: transparent;
+  color: #0f6b56;
+  font-weight: 900;
+  white-space: nowrap;
+}
 
 .country-card, .budget-card, .panel { padding: 15px; margin-bottom: 12px; }
 .school-card { padding: 15px; margin-bottom: 12px; }
@@ -139,7 +159,7 @@ small { color: #6d7b74; word-break: break-word; }
 
 .budget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
 .budget-grid span { background: #edf3ef; border-radius: 8px; padding: 9px; color: #33443b; font-size: 13px; }
-.report-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.report-toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
 .report { background: white; border: 1px solid #dde5dc; border-radius: 8px; padding: 16px; }
 .report h2 { font-size: 18px; margin: 18px 0 8px; }
 .report p, .report li { color: #4c5d54; line-height: 1.68; }
