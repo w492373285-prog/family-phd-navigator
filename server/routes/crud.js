@@ -4,7 +4,7 @@ import { db } from '../db/database.js';
 const TABLES = {
   countries: ['name', 'phd_duration', 'phd_requirements', 'scholarship', 'spouse_allowed', 'spouse_work', 'public_school', 'child_cost', 'healthcare', 'living_cost', 'visa_difficulty', 'post_study_work', 'immigration', 'risks', 'official_links', 'updated_at', 'score_phd_feasibility', 'score_scholarship', 'score_spouse_work', 'score_child_education', 'score_living_cost', 'score_immigration', 'score_safety'],
   schools: ['country', 'name', 'discipline', 'phd_url', 'scholarship_url'],
-  mentors: ['school', 'name', 'research_area', 'email', 'fit_notes'],
+  mentors: ['country', 'school', 'name', 'research_area', 'email', 'profile_url', 'priority', 'keywords', 'fit_notes', 'contact_strategy'],
   budgets: ['country', 'tuition', 'rent', 'living', 'insurance', 'child_school', 'visa', 'note'],
   materials: ['name', 'owner', 'notes', 'required'],
   stages: ['stage_order', 'title', 'task', 'materials', 'completion', 'risks', 'next_step']

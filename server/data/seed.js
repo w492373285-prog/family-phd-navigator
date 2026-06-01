@@ -196,13 +196,147 @@ export const schools = [
   { country: '加拿大', name: 'University of Toronto', discipline: 'Education / Computer Science / Life Science', phd_url: 'https://www.sgs.utoronto.ca/', scholarship_url: 'https://www.sgs.utoronto.ca/awards/' },
   { country: '德国', name: 'Technical University of Munich', discipline: 'Engineering / Informatics / Education', phd_url: 'https://www.tum.de/en/studies/doctoral-candidates', scholarship_url: 'https://www.daad.de/' },
   { country: '新西兰', name: 'University of Auckland', discipline: 'Education / Health / Engineering', phd_url: 'https://www.auckland.ac.nz/', scholarship_url: 'https://www.auckland.ac.nz/en/study/scholarships-and-awards.html' },
-  { country: '香港', name: 'The University of Hong Kong', discipline: 'Education / Medicine / Social Science', phd_url: 'https://gradsch.hku.hk/', scholarship_url: 'https://gradsch.hku.hk/prospective_students/fees_scholarships_and_financial_support' }
+  { country: '香港', name: 'The University of Hong Kong', discipline: 'Education / Medicine / Social Science', phd_url: 'https://gradsch.hku.hk/', scholarship_url: 'https://gradsch.hku.hk/prospective_students/fees_scholarships_and_financial_support' },
+  { country: '英国', name: 'University College London', discipline: 'Education / AI / Social Science', phd_url: 'https://www.ucl.ac.uk/prospective-students/graduate/research-degrees', scholarship_url: 'https://www.ucl.ac.uk/scholarships/' },
+  { country: '荷兰', name: 'University of Amsterdam', discipline: 'Education / Social Science / Data Science', phd_url: 'https://www.uva.nl/en/education/phd/phd.html', scholarship_url: 'https://www.uva.nl/en/education/phd/phd.html' },
+  { country: '日本', name: 'University of Tokyo', discipline: 'Education / Public Policy / Information Science', phd_url: 'https://www.u-tokyo.ac.jp/en/prospective-students/graduate_course.html', scholarship_url: 'https://www.u-tokyo.ac.jp/en/prospective-students/scholarships.html' },
+  { country: '新加坡', name: 'National University of Singapore', discipline: 'Education / Computing / Public Policy', phd_url: 'https://nusgs.nus.edu.sg/', scholarship_url: 'https://nusgs.nus.edu.sg/scholarships/' },
+  { country: '爱尔兰', name: 'Trinity College Dublin', discipline: 'Education / Computer Science / Social Science', phd_url: 'https://www.tcd.ie/study/postgraduate/research/', scholarship_url: 'https://www.tcd.ie/study/postgraduate/scholarships-funding/' }
 ];
 
 export const mentors = [
-  { school: 'University of Melbourne', name: '待筛选导师A', research_area: '家庭教育、教育政策或申请人专业方向', email: 'example@unimelb.edu.au', fit_notes: '用关键词检索近3年论文，优先联系研究方向高度匹配者。' },
-  { school: 'University of Toronto', name: '待筛选导师B', research_area: '教育技术、心理学或申请人专业方向', email: 'example@utoronto.ca', fit_notes: '关注是否明确招收国际博士和是否有RA/TA经费。' },
-  { school: 'Technical University of Munich', name: '待筛选导师C', research_area: '工程、信息、社会科学交叉方向', email: 'example@tum.de', fit_notes: '德国优先查找岗位制博士招聘和研究组页面。' }
+  {
+    country: '澳大利亚',
+    school: 'University of Melbourne',
+    name: 'Prof Jan van Driel',
+    research_area: 'Science Education / Teacher Education',
+    email: 'j.vandriel@unimelb.edu.au',
+    profile_url: 'https://education.unimelb.edu.au/about/specialist-areas/maths-education/our-people',
+    priority: '高',
+    keywords: '科学教育、教师教育、课程改革、教育研究方法',
+    fit_notes: '墨尔本教育学院数学、科学与技术教育方向，适合教育学、科学教育、教师发展相关博士选题。',
+    contact_strategy: '先阅读近3年论文，再用“研究问题 + 中国/国际教育场景 + 方法设计”写一封300字以内套磁邮件。'
+  },
+  {
+    country: '澳大利亚',
+    school: 'University of Melbourne',
+    name: 'Prof Wee Tiong Seah',
+    research_area: 'Mathematics Education / Values in Education',
+    email: 'wt.seah@unimelb.edu.au',
+    profile_url: 'https://education.unimelb.edu.au/about/specialist-areas/maths-education/our-people',
+    priority: '中',
+    keywords: '数学教育、价值观教育、跨文化教育',
+    fit_notes: '适合数学教育、家庭教育价值观、跨文化学习适应等方向。',
+    contact_strategy: '套磁时重点说明研究对象、数据来源和你为什么适合做跨文化教育研究。'
+  },
+  {
+    country: '新西兰',
+    school: 'University of Auckland',
+    name: 'Professor Barbara Grant',
+    research_area: 'Higher Education / Doctoral Education / Supervision',
+    email: '',
+    profile_url: 'https://profiles.auckland.ac.nz/bm-grant',
+    priority: '高',
+    keywords: '高等教育、博士教育、导师制度、学术发展',
+    fit_notes: '奥克兰大学公开主页显示其研究方向包括博士教育、导师制度和高等教育，适合研究博士培养或国际学生支持体系。',
+    contact_strategy: '先用奥克兰大学 supervisor database 核验是否接收新博士，再发送精简研究计划和CV。'
+  },
+  {
+    country: '新西兰',
+    school: 'University of Auckland',
+    name: 'Supervisor Database Match',
+    research_area: 'Education / Health / Engineering supervisor search',
+    email: '',
+    profile_url: 'https://www.auckland.ac.nz/en/staff/staff-information.html',
+    priority: '高',
+    keywords: '官方导师库、博士导师、研究项目',
+    fit_notes: '奥克兰大学提供硕博导师和研究项目搜索入口，适合按你的目标专业关键词继续筛选真实可带博士的导师。',
+    contact_strategy: '在导师库输入专业关键词，优先联系页面明确列出doctoral supervision或research projects的导师。'
+  },
+  {
+    country: '德国',
+    school: 'Technical University of Munich',
+    name: 'Prof Dr. Zeynep Akata',
+    research_area: 'Explainable Machine Learning / Reliable AI',
+    email: '',
+    profile_url: 'https://www.professoren.tum.de/en/akata-zeynep',
+    priority: '高',
+    keywords: '可解释机器学习、可靠AI、计算机视觉、自然语言处理',
+    fit_notes: '适合AI、教育技术、可信AI或数据科学方向；德国更适合按课题组/岗位制博士方式联系。',
+    contact_strategy: '不要泛泛说想读博，先找课题组open position或最新论文，再说明你能参与的具体研究问题。'
+  },
+  {
+    country: '德国',
+    school: 'Technical University of Munich',
+    name: 'Prof Dr. Thomas Neumann',
+    research_area: 'Database Systems / Data Engineering',
+    email: 'thomas.neumann@in.tum.de',
+    profile_url: 'https://db.in.tum.de/people',
+    priority: '中',
+    keywords: '数据库系统、数据工程、查询优化',
+    fit_notes: '适合计算机、数据库、数据系统方向。TUM岗位制机会多，需重点看chair页面和招聘页面。',
+    contact_strategy: '套磁邮件附上技术项目、代码或论文摘要，比泛泛个人陈述更有效。'
+  },
+  {
+    country: '德国',
+    school: 'Technical University of Munich',
+    name: 'Prof Dr. Susanne Albers',
+    research_area: 'Algorithms and Complexity',
+    email: 'albers@cit.tum.de',
+    profile_url: 'https://www.cs.cit.tum.de/en/ac/people/albers/',
+    priority: '中',
+    keywords: '算法、复杂性、在线算法、近似算法',
+    fit_notes: '适合理论计算机、算法、复杂性方向，申请前需要较强数学和论文背景。',
+    contact_strategy: '如果没有理论论文，先作为冲刺导师；邮件中突出数学训练、竞赛或研究证明能力。'
+  },
+  {
+    country: '加拿大',
+    school: 'University of Toronto',
+    name: 'Professor Glen A. Jones',
+    research_area: 'Higher Education Policy / Governance',
+    email: '',
+    profile_url: 'https://www.oise.utoronto.ca/hec/about',
+    priority: '中',
+    keywords: '高等教育政策、大学治理、国际化、博士教育',
+    fit_notes: '适合教育政策、高等教育治理和国际教育方向；多伦多生活成本高，但研究资源强。',
+    contact_strategy: '先确认OISE具体项目和导师招生状态，再结合加拿大教育政策或中国家庭国际教育议题写proposal。'
+  },
+  {
+    country: '香港',
+    school: 'The University of Hong Kong',
+    name: 'Professor CHEN, Gaowei',
+    research_area: 'Learning Sciences / AI in Education',
+    email: '',
+    profile_url: 'https://web.edu.hku.hk/research-expertise/technology-enhanced-learning',
+    priority: '高',
+    keywords: '人工智能教育、学习科学、教育对话、教师专业发展',
+    fit_notes: 'HKU教育学院技术增强学习方向，适合教育技术、AI教育和学习科学选题。',
+    contact_strategy: '香港导师通常重视研究计划成熟度，建议附1页proposal摘要和英文CV。'
+  },
+  {
+    country: '香港',
+    school: 'The University of Hong Kong',
+    name: 'Professor Khe Foon Hew',
+    research_area: 'Educational Technology / Digital Learning',
+    email: '',
+    profile_url: 'https://www.giving.hku.hk/endowed-professorships-list/kintoy-professorship-in-educational-technology',
+    priority: '高',
+    keywords: '教育技术、数字学习、学习设计、实证研究',
+    fit_notes: '适合数字学习干预、教育技术效果评估、K12技术增强学习方向。',
+    contact_strategy: '重点说明研究干预设计、样本来源和量化/混合研究方法。'
+  },
+  {
+    country: '香港',
+    school: 'The University of Hong Kong',
+    name: 'Professor LAW, Nancy W. Y.',
+    research_area: 'Learning Sciences / Technology-enhanced Learning',
+    email: '',
+    profile_url: 'https://web.edu.hku.hk/faculty-academics/nlaw',
+    priority: '暂缓',
+    keywords: '学习科学、技术增强学习、教育变革',
+    fit_notes: '研究方向高度相关，但其公开主页显示2026-2027不接收研究生指导，因此只作为研究方向参考，不建议作为当前套磁对象。',
+    contact_strategy: '不要作为第一批套磁导师；可沿着其研究中心和合作者继续找可招生导师。'
+  }
 ];
 
 export const budgets = [

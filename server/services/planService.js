@@ -98,7 +98,7 @@ export function generatePlan(form) {
 
   const topNames = topCountries.map(country => country.name);
   const schools = db.prepare(`SELECT * FROM schools WHERE country IN (${topNames.map(() => '?').join(',')})`).all(...topNames);
-  const mentors = db.prepare('SELECT * FROM mentors').all();
+  const mentors = db.prepare(`SELECT * FROM mentors WHERE country IN (${topNames.map(() => '?').join(',')}) ORDER BY CASE priority WHEN '高' THEN 1 WHEN '中' THEN 2 WHEN '暂缓' THEN 4 ELSE 3 END, country, school, id`).all(...topNames);
   const budgets = db.prepare(`SELECT * FROM budgets WHERE country IN (${topNames.map(() => '?').join(',')})`).all(...topNames);
   const stages = db.prepare('SELECT * FROM stages ORDER BY stage_order').all();
   const materials = db.prepare('SELECT * FROM materials ORDER BY id').all();
